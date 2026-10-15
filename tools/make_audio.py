@@ -53,7 +53,11 @@ def main():
     if not todo: return
     if a.lang == "te":
         syn = load_te(os.environ.get("TE_MODEL_DIR", os.path.expanduser("~/tts/te")))
-        say = lambda t: syn.tts(t, speaker_name=a.voice); save = syn.save_wav
+        def say(t):
+            # a little slower than the model's default; the app's speed setting adjusts from here
+            syn.tts_model.length_scale = 1.25 if is_word(t) else 1.15
+            return syn.tts(t, speaker_name=a.voice)
+        save = syn.save_wav
     else:
         from TTS.api import TTS
         tts = TTS("tts_models/en/ljspeech/vits"); syn = tts.synthesizer
@@ -73,10 +77,10 @@ def main():
                 except Exception as e:
                     print("FAILED", x["id"], x["say"], e, file=sys.stderr); continue
             # trim edge silence, normalise loudness, small mono mp3
-            pre, post = (0.15, 0.35) if is_word(x["say"]) else (0.08, 0.2)
+            pre, post = (0.15, 0.35) if is_word(x["say"]) else (0.1, 0.3)
             # trim long silences but keep a little, so word endings are never clipped; then add breathing room
-            af = ("silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.05,areverse,"
-                  "silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.12,areverse,"
+            af = ("silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.08,areverse,"
+                  "silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.2,areverse,"
                   f"loudnorm=I=-18:TP=-2,adelay={int(pre * 1000)},apad=pad_dur={post}")
             subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", w.name, "-af", af,
                             "-ar", "22050", "-ac", "1", "-c:a", "libmp3lame", "-q:a", "7", os.path.join(out, x["id"] + ".mp3")], check=True)
