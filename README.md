@@ -35,6 +35,12 @@ python3 tools/make_audio.py /tmp/family.jsonl family/audio --lang te --voice mal
 python3 tools/make_audio.py /tmp/family.jsonl family/audio --lang en
 python3 tools/build_pack.py family/family.json family/audio family/out/family-pack.json
 ```
+Restore the private sources in a fresh workspace from the pack you already have:
+```
+python3 tools/unpack_pack.py family-pack.json family/
+```
+`main` is protected: publish changes through a branch and pull request; the Privacy check must pass before merging.
+
 Content lives in `js/content/` (questions, dictionary, context); spoken wording in `js/speech-script.js`.
 
 This app is a practice aid, not legal or immigration advice. Answers must always be truthful and match the DS-160.
