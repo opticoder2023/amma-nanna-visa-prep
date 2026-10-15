@@ -10,7 +10,7 @@ Telugu: AI4Bharat Indic-TTS FastPitch + HiFi-GAN (te.zip from github.com/AI4Bhar
 English: Coqui TTS "tts_models/en/ljspeech/vits" (LJ Speech, public domain data; needs espeak-ng).
 Clips already present are skipped, so re-running only records what changed.
 """
-import argparse, json, os, subprocess, sys, tempfile, warnings
+import argparse, json, os, re, subprocess, sys, tempfile, warnings
 warnings.filterwarnings("ignore")
 
 def load_te(model_dir):
@@ -25,6 +25,11 @@ def load_te(model_dir):
     return Synthesizer(tts_checkpoint=os.path.join(model_dir, "fastpitch", "best_model.pth"), tts_config_path=cfg,
                        tts_speakers_file=spk, vocoder_checkpoint=os.path.join(model_dir, "hifigan", "best_model.pth"),
                        vocoder_config=os.path.join(model_dir, "hifigan", "config.json"), use_cuda=False)
+
+def clean(t):
+    """Collapse punctuation runs such as '?,' that leave empty fragments for the model."""
+    t = re.sub(r"([?!.])\s*[,.]+", r"\1", t)
+    return re.sub(r",\s*,+", ",", t).strip()
 
 def voice_dir(lang, voice):
     """te = female Telugu, te-m = male Telugu, en = English."""
@@ -51,10 +56,14 @@ def main():
         say = lambda t: syn.tts(t); save = syn.save_wav
     for i, x in enumerate(todo, 1):
         with tempfile.NamedTemporaryFile(suffix=".wav") as w:
+            text = clean(x["say"])
             try:
-                save(say(x["say"]), w.name)
-            except Exception as e:
-                print("FAILED", x["id"], x["say"], e, file=sys.stderr); continue
+                save(say(text), w.name)
+            except Exception:
+                try:  # very short fragments between punctuation can trip the model; retry as one phrase
+                    save(say(re.sub(r"[?!.,]+", ",", text).strip(", ") + "."), w.name)
+                except Exception as e:
+                    print("FAILED", x["id"], x["say"], e, file=sys.stderr); continue
             # trim edge silence, normalise loudness, small mono mp3
             subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", w.name, "-af",
                             "silenceremove=start_periods=1:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_threshold=-50dB,areverse,loudnorm=I=-18:TP=-2",
