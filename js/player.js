@@ -6,6 +6,14 @@ import { PUBLIC_CLIPS } from "../audio/index.js";
 const builtIn = Object.fromEntries(Object.entries(PUBLIC_CLIPS).map(([k, v]) => [k, new Set(v)]));
 const packUrls = { te: new Map(), "te-m": new Map(), en: new Map() };
 let teDir = "te";
+let speed = "slow";
+/** "slow" (default: English plays as recorded, already slow) or "normal" (English a little faster). */
+export function setSpeed(v){ speed = v === "normal" ? "normal" : "slow"; }
+function enRate(r){
+  if (r <= 0.65) return 0.85;           // the explicit "slowly" button
+  if (r >= 0.95) return 1.25;           // the explicit "normal speed" button
+  return speed === "normal" ? 1.2 : 1;
+}
 /** "female" (default) or "male" Telugu voice; falls back to the other voice when a clip is missing. */
 export function setVoice(v){ teDir = v === "male" ? "te-m" : "te"; }
 const audio = new Audio();
@@ -71,14 +79,14 @@ export function play(items){
     if (url) {
       audio.onended = fin; audio.onerror = fin;
       audio.src = url;
-      audio.playbackRate = it.l === "en" ? Math.max(0.6, Math.min(1.1, (it.r || 0.9) / 0.9)) : 1;
+      audio.playbackRate = it.l === "en" ? enRate(it.r || 0.9) : 1;
       const p = audio.play(); if (p && p.catch) p.catch(fin);
       return;
     }
     try {
       const u = new SpeechSynthesisUtterance(it.t);
       if (it.l === "te") { u.lang = "te-IN"; if (teVoice) u.voice = teVoice; u.rate = 0.9; }
-      else { u.lang = "en-US"; if (enVoice) u.voice = enVoice; u.rate = it.r || 0.9; }
+      else { u.lang = "en-US"; if (enVoice) u.voice = enVoice; u.rate = 0.75 * enRate(it.r || 0.9); }
       u.onend = fin; u.onerror = fin;
       speechSynthesis.speak(u);
     } catch (e) { fin(); }

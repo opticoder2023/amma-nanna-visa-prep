@@ -31,6 +31,10 @@ def clean(t):
     t = re.sub(r"([?!.])\s*[,.]+", r"\1", t)
     return re.sub(r",\s*,+", ",", t).strip()
 
+def is_word(t):
+    """One or two words without sentence punctuation (dictionary entries, names)."""
+    return len(t.split()) <= 2 and not re.search(r"[.?!]", t)
+
 def voice_dir(lang, voice):
     """te = female Telugu, te-m = male Telugu, en = English."""
     return "te-m" if lang == "te" and voice == "male" else lang
@@ -53,7 +57,11 @@ def main():
     else:
         from TTS.api import TTS
         tts = TTS("tts_models/en/ljspeech/vits"); syn = tts.synthesizer
-        say = lambda t: syn.tts(t); save = syn.save_wav
+        def say(t):
+            # recorded slowly on purpose (learners): single words slowest, sentences a little slow
+            syn.tts_model.length_scale = 1.6 if is_word(t) else 1.25
+            return syn.tts(t)
+        save = syn.save_wav
     for i, x in enumerate(todo, 1):
         with tempfile.NamedTemporaryFile(suffix=".wav") as w:
             text = clean(x["say"])
@@ -65,8 +73,12 @@ def main():
                 except Exception as e:
                     print("FAILED", x["id"], x["say"], e, file=sys.stderr); continue
             # trim edge silence, normalise loudness, small mono mp3
-            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", w.name, "-af",
-                            "silenceremove=start_periods=1:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_threshold=-50dB,areverse,loudnorm=I=-18:TP=-2",
+            pre, post = (0.15, 0.35) if is_word(x["say"]) else (0.08, 0.2)
+            # trim long silences but keep a little, so word endings are never clipped; then add breathing room
+            af = ("silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.05,areverse,"
+                  "silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.12,areverse,"
+                  f"loudnorm=I=-18:TP=-2,adelay={int(pre * 1000)},apad=pad_dur={post}")
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", w.name, "-af", af,
                             "-ar", "22050", "-ac", "1", "-c:a", "libmp3lame", "-q:a", "7", os.path.join(out, x["id"] + ".mp3")], check=True)
         if i % 50 == 0: print(f"{a.lang}: {i}/{len(todo)}", flush=True)
     print(f"{a.lang}: done", flush=True)

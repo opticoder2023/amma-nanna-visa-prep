@@ -28,7 +28,9 @@ store.parent = store.parent || "amma";
 store.progress = store.progress || {amma:{}, nanna:{}};
 store.userDetails = store.userDetails || {};
 store.voice = store.voice || "female";
+store.speed = store.speed || "slow";
 player.setVoice(store.voice);
+player.setSpeed(store.speed);
 
 let pack = null, C = buildContent(null, store.userDetails), S = makeScript(C, store.parent);
 function rebuild(){ C = buildContent(pack, store.userDetails); S = makeScript(C, store.parent); USAGE = null; }
@@ -249,6 +251,13 @@ function openSettings(msg){
       </div>
       <button class="btn soft" data-play="vsample">${ICON.play} వినండి · Listen</button>
     </section>
+    <section class="packbox">
+      <p class="fl">${ICON.spk} ఇంగ్లీష్ వేగం · English speed</p>
+      <div class="seg wide-seg" role="group" aria-label="English speed">
+        <button data-act="speed" data-v="slow" aria-pressed="${store.speed === "slow"}">నెమ్మదిగా</button>
+        <button data-act="speed" data-v="normal" aria-pressed="${store.speed === "normal"}">మామూలు</button>
+      </div>
+    </section>
     <details class="gloss"><summary>వివరాలు మార్చండి · Edit details on this phone</summary>
       <p class="note">ఇక్కడ మార్చినవి ఈ ఫోన్‌లో మాత్రమే. Changed details play with the phone's own voice until the pack is rebuilt.</p>
       <div class="fgrid">${keys.map(k => { const d = C.details[k] || {en:"", te:""}; return `<div class="field"><span class="fl">${esc(C.labels[k][0])}<small>${esc(C.labels[k][1])}</small></span>
@@ -318,6 +327,7 @@ document.addEventListener("click", e => {
     case "mock-ans": state.mock.ans = true; render(true); break;
     case "mock-next": { stopAll(); const M = state.mock; M.i++; M.te = false; M.ans = false; render(); if (M.i < M.list.length) player.play(S.en(C.qmap[M.list[M.i]].en)); break; }
     case "settings": openSettings(); break;
+    case "speed": store.speed = b.dataset.v; save(); player.setSpeed(store.speed); openSettings(); player.play(S.en("What is the purpose of your visit?")); break;
     case "voice": store.voice = b.dataset.v; save(); player.setVoice(store.voice); openSettings(); playKey("vsample"); break;
     case "close": case "close-bg": $("#modal").innerHTML = ""; break;
     case "pack-load": loadPackFromForm(); break;
