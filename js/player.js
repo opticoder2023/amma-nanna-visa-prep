@@ -6,14 +6,18 @@ import { PUBLIC_CLIPS } from "../audio/index.js";
 const builtIn = Object.fromEntries(Object.entries(PUBLIC_CLIPS).map(([k, v]) => [k, new Set(v)]));
 const packUrls = { te: new Map(), "te-m": new Map(), en: new Map() };
 let teDir = "te";
-let speed = "slow";
-/** "slow" (default: English plays as recorded, already slow) or "normal" (English a little faster). */
-export function setSpeed(v){ speed = v === "normal" ? "normal" : "slow"; }
+/** Five speed steps per language (0 = slowest). Clips are recorded slowly; these scale playback without changing pitch. */
+export const SPEED_STEPS = 5;
+const RATES = { en: [0.8, 1, 1.1, 1.2, 1.35], te: [0.75, 0.85, 0.92, 1, 1.15] };
+export const DEFAULT_STEP = { en: 1, te: 3 };
+const step = { ...DEFAULT_STEP };
+export function setSpeedStep(lang, n){ if (RATES[lang]) step[lang] = Math.max(0, Math.min(SPEED_STEPS - 1, +n)); }
 function enRate(r){
-  if (r <= 0.65) return 0.85;           // the explicit "slowly" button
-  if (r >= 0.95) return 1.25;           // the explicit "normal speed" button
-  return speed === "normal" ? 1.2 : 1;
+  if (r <= 0.65) return 0.85;           // the per-card "slowly" button
+  if (r >= 0.95) return 1.25;           // the per-card "normal speed" button
+  return RATES.en[step.en];
 }
+const teRate = () => RATES.te[step.te];
 /** "female" (default) or "male" Telugu voice; falls back to the other voice when a clip is missing. */
 export function setVoice(v){ teDir = v === "male" ? "te-m" : "te"; }
 const audio = new Audio();
@@ -79,13 +83,13 @@ export function play(items){
     if (url) {
       audio.onended = fin; audio.onerror = fin;
       audio.src = url;
-      audio.playbackRate = it.l === "en" ? enRate(it.r || 0.9) : 1;
+      audio.playbackRate = it.l === "en" ? enRate(it.r || 0.9) : teRate();
       const p = audio.play(); if (p && p.catch) p.catch(fin);
       return;
     }
     try {
       const u = new SpeechSynthesisUtterance(it.t);
-      if (it.l === "te") { u.lang = "te-IN"; if (teVoice) u.voice = teVoice; u.rate = 0.9; }
+      if (it.l === "te") { u.lang = "te-IN"; if (teVoice) u.voice = teVoice; u.rate = 0.9 * teRate(); }
       else { u.lang = "en-US"; if (enVoice) u.voice = enVoice; u.rate = 0.75 * enRate(it.r || 0.9); }
       u.onend = fin; u.onerror = fin;
       speechSynthesis.speak(u);
