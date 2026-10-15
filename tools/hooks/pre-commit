@@ -1,0 +1,4 @@
+#!/bin/sh
+# Blocks commits that would put personal family data in the public repo.
+# Install once:  git config core.hooksPath tools/hooks
+exec python3 tools/privacy_check.py --staged

@@ -1,0 +1,17 @@
+{
+ "name": "Amma Nanna Visa Prep · వీసా ఇంటర్వ్యూ సాధన",
+ "short_name": "Visa Prep",
+ "description": "Daily B1/B2 visa interview practice in English with Telugu explanations and audio.",
+ "lang": "te",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#f2f4f8",
+ "theme_color": "#1f3a68",
+ "icons": [
+  {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+  {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+  {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+ ]
+}

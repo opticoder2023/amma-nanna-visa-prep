@@ -1,0 +1,10 @@
+# Private family data: NEVER commit
+family/
+*.annvisa
+*family-pack*.json
+
+# local tooling
+node_modules/
+__pycache__/
+*.wav
+.DS_Store

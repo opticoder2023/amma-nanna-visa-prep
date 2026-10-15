@@ -1,0 +1,10 @@
+{
+  "name": "amma-nanna-visa-prep",
+  "private": true,
+  "type": "module",
+  "description": "Telugu/English visa interview practice app. Build tools only; the site itself needs no build step.",
+  "scripts": {
+    "privacy": "python3 tools/privacy_check.py",
+    "texts": "node tools/collect-texts.mjs"
+  }
+}
