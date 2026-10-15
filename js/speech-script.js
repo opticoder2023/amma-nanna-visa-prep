@@ -64,9 +64,13 @@ export function makeScript(C, parent){
       return [TE(qType(q) === "hear" ? "మీరు ఇలా చెప్పండి." : "మీ సమాధానం."), EN(en, 0.75), TE("పదం పదం అర్థం."), ...wordItems(a.en, `a-${id}-${k}`),
         TE("మొత్తం అర్థం."), TE(fillPlain(C, parent, a.te, "te")), EN(en, 0.75), TE("ఇప్పుడు మీరు గట్టిగా చెప్పండి."), {pause:6000},
         TE("మళ్ళీ ఒకసారి వినండి."), EN(en)]; },
-    v(id, i){ const q = C.qmap[id], v = q.vars[+i];
-      return [{...EN(v[0], 0.8), hl:`[data-var="${id}-${i}"]`}, TE("అంటే, " + ((q.vte || [])[+i] || q.te))]; },
-    vall(id){ const q = C.qmap[id]; return [TE("ఆఫీసర్ ఇదే ప్రశ్నను ఇలా కూడా అడగవచ్చు."), ...q.vars.flatMap((_, i) => S.v(id, i))]; },
+    // one alternative phrasing, explained like the main question
+    v(id, i){ const q = C.qmap[id], v = q.vars[+i], mean = (q.vte || [])[+i] || q.te;
+      return [{...EN(v[0], 0.75), hl:`[data-var="${id}-${i}"]`}, TE("పదం పదం అర్థం."), ...wordItems(v[0], `v-${id}-${i}`),
+        TE("మొత్తం అర్థం."), TE(mean), EN(v[0])]; },
+    // all alternatives back to back: English and meaning only, to keep it short
+    vall(id){ const q = C.qmap[id]; return [TE("ఆఫీసర్ ఇదే ప్రశ్నను ఇలా కూడా అడగవచ్చు."),
+      ...q.vars.flatMap((v, i) => [{...EN(v[0], 0.75), hl:`[data-var="${id}-${i}"]`}, TE("అంటే, " + ((q.vte || [])[i] || q.te))])]; },
     tip(id){ return teLines(C.qmap[id].tip); },
     ctx(id){ return teLines(C.qmap[id].ctx); },
     w(core){ const m = meaning(core); return [EN(core, 0.7), ...(m ? [TE("అంటే, " + m)] : [])]; },

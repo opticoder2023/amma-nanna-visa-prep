@@ -102,8 +102,11 @@ const ctxHTML = q => q.ctx ? `<div class="ctx"><div><p class="section-t">${qType
 function varsHTML(q){
   if (!q.vars || !q.vars.length) return "";
   return `<div class="vars"><div class="vars-h"><p class="section-t">ఆఫీసర్ ఇలా కూడా అడగవచ్చు</p>${playBtn(`vall:${q.id}`, "అన్నీ వినండి", "soft")}</div>${q.vars.map((v, i) => `
-    <div class="var" data-var="${q.id}-${i}"><div><div class="e">${esc(v[0])}</div><div class="p">${esc(v[1])}</div><div class="t">${esc(q.vte[i] || "")}</div></div>
-    <button class="mini" aria-label="Listen" data-play="v:${q.id}:${i}">${ICON.spk}</button></div>`).join("")}</div>`;
+    <div class="var" data-var="${q.id}-${i}">
+      <div class="var-top"><div><div class="e">${esc(v[0])}</div><div class="p">${esc(v[1])}</div><div class="t">${esc(q.vte[i] || "")}</div></div>
+        <button class="mini" aria-label="Listen" data-play="v:${q.id}:${i}">${ICON.spk}</button></div>
+      <details class="gloss"><summary>పదం పదం అర్థం</summary>${glossHTML(v[0], `v-${q.id}-${i}`)}</details>
+    </div>`).join("")}</div>`;
 }
 const tipHTML = q => q.tip ? `<div class="tip"><span>${esc(q.tip)}</span><button class="mini" aria-label="Listen" data-play="tip:${q.id}">${ICON.spk}</button></div>` : "";
 
